@@ -1,0 +1,72 @@
+import customtkinter as ctk
+from tkinter import messagebox
+
+class LoginFrame(ctk.CTkFrame):
+    def __init__(self, master, controller):
+        super().__init__(master, corner_radius=15, fg_color="#1E1E2E")
+        self.controller = controller
+
+        # titulo
+        ctk.CTkLabel(
+            self, text="¡Bienvenido!",
+            font=ctk.CTkFont(size=26, weight="bold"),
+            text_color="#FFFFFF"
+        ).pack(pady=(30, 5))
+
+        ctk.CTkLabel(
+            self, text="Inicia sesión en tu cuenta",
+            font=ctk.CTkFont(size=13),
+            text_color="#A6ADC8"
+        ).pack(pady=(0, 25))
+
+        # campos de entrada
+        self.user_entry = ctk.CTkEntry(
+            self, placeholder_text="Usuario o Email",
+            width=280, height=45, corner_radius=10,
+            fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
+        )
+        self.user_entry.pack(pady=10)
+
+        self.pass_entry = ctk.CTkEntry(
+            self, placeholder_text="Contraseña", show="•",
+            width=280, height=45, corner_radius=10,
+            fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
+        )
+        self.pass_entry.pack(pady=10)
+
+        # checbox
+        ctk.CTkCheckBox(
+            self, text="Recordarme",
+            font=ctk.CTkFont(size=12), text_color="#BAC2DE",
+            checkbox_width=20, checkbox_height=20, corner_radius=6
+        ).pack(pady=(10, 20), anchor="w", padx=30)
+
+        # iniciar sesion
+        ctk.CTkButton(
+            self, text="Iniciar Sesión", command=self.submit_login,
+            width=280, height=45, corner_radius=10,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            fg_color="#89B4FA", hover_color="#74C7EC", text_color="#11111B"
+        ).pack(pady=10)
+
+        # enlace a registro
+        toggle_label = ctk.CTkLabel(
+            self, text="¿No tienes cuenta? Regístrate aquí",
+            font=ctk.CTkFont(size=12, underline=True),
+            text_color="#89B4FA", cursor="hand2"
+        )
+        toggle_label.pack(pady=(20, 0))
+        toggle_label.bind("<Button-1>", lambda e: self.controller.show_frame("RegisterFrame"))
+
+    def submit_login(self):
+        user = self.user_entry.get().strip()
+        password = self.pass_entry.get().strip()
+
+        if not user or not password:
+            messagebox.showwarning("Atención", "Por favor, ingresa tu usuario y contraseña.")
+            return
+
+        if user in self.controller.users_db and self.controller.users_db[user] == password:
+            messagebox.showinfo("Éxito", f"¡Bienvenido de nuevo, {user}!")
+        else:
+            messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
