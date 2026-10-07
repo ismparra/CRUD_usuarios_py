@@ -14,18 +14,18 @@ class Database:
 
     # Consultas
     def get_all_users(self):
-        self.cursor.execute("select * from usuarios")
+        self.cursor.execute("select * from USERS")
         return self.cursor.fetchall()
     
     def get_user(self,usuario):
-        self.cursor.execute("select * from usuarios where usuario = %s",(usuario,))
+        self.cursor.execute("select * from USERS where USERNAME = %s",(usuario,))
         return self.cursor.fetchone()
     
     def get_userByPassword(self,usuario,password):
-        self.cursor.execute("select * from usuarios where usuario = %s and password = sha2(%s,256)",(usuario,password))
+        self.cursor.execute("select * from USERS where USERNAME = %s and PASSWORD = sha2(%s,256)",(usuario,password))
         return self.cursor.fetchone()
 
-    def insert_user(self,control, usuario, nombre, apellidos, password,email, numeroTarjeta, CVV):
+    def insert_user(self, usuario, nombre, apellidos, password,email, numeroTarjeta, CVV):
         try:
             self.cursor.execute("insert into usuarios(control, usuario, nombre, apellidos, password,email, NumeroTarjeta, CVV) \
             values(%s,%s,%s,%s,sha2(%s,256),%s,aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'))",(control, usuario, nombre, apellidos, password,email, numeroTarjeta, CVV))
