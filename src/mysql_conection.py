@@ -25,10 +25,10 @@ class Database:
         self.cursor.execute("select * from USERS where USERNAME = %s and PASSWORD = sha2(%s,256)",(usuario,password))
         return self.cursor.fetchone()
 
-    def insert_user(self, usuario, nombre, apellidos, password,email, numeroTarjeta, CVV):
+    def insert_user(self, usuario, nombre, apellidos, password,email, numeroTarjeta, titularTarjeta,fecha_de_vencimiento, CVV, admin, numero_Telefono, FechaNacimiento):
         try:
-            self.cursor.execute("insert into usuarios(control, usuario, nombre, apellidos, password,email, NumeroTarjeta, CVV) \
-            values(%s,%s,%s,%s,sha2(%s,256),%s,aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'))",(control, usuario, nombre, apellidos, password,email, numeroTarjeta, CVV))
+            self.cursor.execute("insert into USERS(USERNAME, FIRSTNAME, LASTNAME, PASSWORD, EMAIL, NUMEROTARJETA, TITULARTARJETA, FECHA_DE_VENCIMIENTO, CVV, ADMIN, PHONE_NUMBER, DATE_OF_BIRTH, CREATED_AT, UPDATED_AT, LAST_LOGIN, IS_ACTIVE) \
+            values(%s,%s,%s,sha2(%s,256),%s,aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),%s,%s,%s,NOW(),NOW(),NOW(),1)",(usuario, nombre, apellidos, password,email, numeroTarjeta, titularTarjeta, fecha_de_vencimiento, CVV, admin, numero_Telefono, FechaNacimiento))
             self.connection.commit()
             print("usuario insertado correctamente")
         except Error as e:
