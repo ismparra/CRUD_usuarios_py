@@ -2,6 +2,7 @@ import customtkinter as ctk
 from login import LoginFrame
 from registro import RegisterFrame
 from tarjeta import TarjetaFrame
+
 # tema
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -18,7 +19,8 @@ class AuthApp(ctk.CTk):
 
         # Base de datos local
         self.users_db = {"admin": "1234"}
-
+        # self.db = Database()        # en lugar de self.users_db
+        # self.current_user = None
         self.current_frame = None
         self.show_frame("LoginFrame")
         self.after(0, lambda: self.state("zoomed"))

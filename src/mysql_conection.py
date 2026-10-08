@@ -1,11 +1,17 @@
 import mysql.connector
 from mysql.connector import Error
+import os
+from dotenv import load_dotenv
+load_dotenv()  # cargar las variables del .env
 
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 class Database:
     def __init__(self):
         try:
             self.connection = mysql.connector.connect(
-                host='localhost', database='control_itsur', user='root', password='root'
+                host=DB_HOST, database='control_itsur', user=DB_USER, password=DB_PASSWORD
             )
             self.cursor = self.connection.cursor(dictionary=True)
             print("Conexión exitosa a MySQL.")
