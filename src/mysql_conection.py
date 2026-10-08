@@ -1,17 +1,11 @@
 import mysql.connector
 from mysql.connector import Error
-import os
-from dotenv import load_dotenv
-load_dotenv()  # cargar las variables del .env
 
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
 class Database:
     def __init__(self):
         try:
             self.connection = mysql.connector.connect(
-                host=DB_HOST, database='control_itsur', user=DB_USER, password=DB_PASSWORD
+                host='localhost', database='control_itsur', user='root', password='root'
             )
             self.cursor = self.connection.cursor(dictionary=True)
             print("Conexión exitosa a MySQL.")
@@ -40,12 +34,37 @@ class Database:
         except Error as e:
             print(f"Error al insertar usuario: {e}")
             self.connection.rollback()
+
+    def modify_user(self, usuario, nombre, apellidos, password,email, numeroTarjeta, titularTarjeta,fecha_de_vencimiento, CVV, admin, numero_Telefono, FechaNacimiento):
+        try:
+            self.cursor.execute("UPDATE USERS SET USERNAME = %s, FIRSTNAME = %s, LASTNAME = %s, PASSWORD = SHA2(%s, 256),\
+                                 EMAIL = %s, NUMEROTARJETA = AES_ENCRYPT(%s, '**PRIvada002233'),\
+                                 TITULARTARJETA = AES_ENCRYPT(%s, '**PRIvada002233'), FECHA_DE_VENCIMIENTO = AES_ENCRYPT(%s, '**PRIvada002233'),\
+                                 CVV = AES_ENCRYPT(%s, '**PRIvada002233'), ADMIN = %s, PHONE_NUMBER = %s, DATE_OF_BIRTH = %s, CREATED_AT = NOW(), UPDATED_AT = NOW(),\
+                                 LAST_LOGIN = NOW(), IS_ACTIVE = %s WHERE USERNAME = %s;",(usuario, nombre, apellidos, password,email, numeroTarjeta, titularTarjeta, fecha_de_vencimiento, CVV, admin, numero_Telefono, FechaNacimiento))
+            self.connection.commit()
+            print("usuario modificado correctamente")
+        except Error as e:
+            print(f"Error al modificar el usuario: {e}")
+            self.connection.rollback()
+
+    def DELETEUSER(usuario):
+        try:
+            self.cursor.execute("UPDATE USERS SET IS_ACTIVE = FALSE WHERE USERNAME = %s", (usuario))
+            self.connection.commit()
+            print("Usuario dado de baja")
+        except Error as e:
+            print(f"Error al dar de baja al usuario: {e}")
+            self.connection.rollback()
+
     def close(self):
         if hasattr(self, 'cursor') and self.cursor:
             self.cursor.close()
         if hasattr(self, 'connection') and self.connection.is_connected():
             self.connection.close()
             print("Conexión cerrada.")
+
+    
 
 # use de clase:
 db = Database()
