@@ -20,13 +20,14 @@ class LoginFrame(ctk.CTkFrame):
         ).pack(pady=(0, 25))
 
         # campos de entrada
+        # Usuario
         self.user_entry = ctk.CTkEntry(
             self, placeholder_text="Usuario o Email",
             width=280, height=45, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
         self.user_entry.pack(pady=10)
-
+        # Contrasenia
         self.pass_entry = ctk.CTkEntry(
             self, placeholder_text="Contraseña", show="•",
             width=280, height=45, corner_radius=10,
@@ -34,12 +35,6 @@ class LoginFrame(ctk.CTkFrame):
         )
         self.pass_entry.pack(pady=10)
 
-        # checbox
-        ctk.CTkCheckBox(
-            self, text="Recordarme",
-            font=ctk.CTkFont(size=12), text_color="#BAC2DE",
-            checkbox_width=20, checkbox_height=20, corner_radius=6
-        ).pack(pady=(10, 20), anchor="w", padx=30)
 
         # iniciar sesion
         ctk.CTkButton(
