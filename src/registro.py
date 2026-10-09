@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+from datetime import datetime
 
 class RegisterFrame(ctk.CTkScrollableFrame):
     def __init__(self, master, controller):
@@ -86,12 +87,12 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         
         
         # es admin
-        admin_var = ctk.StringVar(value = 'off')
+        self.admin_var = ctk.StringVar(value = 'off')
         self.admin_entry = ctk.CTkSwitch(
             self, text="ADMIN",
             width=280, height=22, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF",
-            variable = admin_var,
+            variable = self.admin_var,
             onvalue = 'on',
             offvalue = 'off'
         )
@@ -116,26 +117,61 @@ class RegisterFrame(ctk.CTkScrollableFrame):
 
     def submit_register(self):
         user = self.user_entry.get().strip()
+        name = self.name_entry.get().strip()
+        lastname = self.lastname_entry.get().strip()
+        birth = self.birth_entry.get().strip()
         email = self.email_entry.get().strip()
+        phone = self.phone_entry.get().strip()
         password = self.pass_entry.get().strip()
         confirm_pass = self.confirm_pass_entry.get().strip()
+        is_admin = self.admin_var.get() == 'on'
 
-        if not user or not email or not password or not confirm_pass:
+        # Campos obligatorios
+        if not all([user, name, lastname, birth, email, phone, password, confirm_pass]):
             messagebox.showwarning("Atención", "Todos los campos son obligatorios.")
             return
 
+        # Fecha de nacimiento (formato DD/MM/AAAA)
+        try:
+            birth_date = datetime.strptime(birth, "%d/%m/%Y").date()
+        except ValueError:
+            messagebox.showwarning("Atención", "La fecha debe tener el formato DD/MM/AAAA.")
+            return
+
+        if birth_date > datetime.now().date():
+            messagebox.showwarning("Atención", "La fecha de nacimiento no puede ser futura.")
+            return
+
+        # Correo
         if "@" not in email or "." not in email:
             messagebox.showwarning("Atención", "Por favor ingresa un correo electrónico válido.")
             return
 
-        if user in self.controller.users_db:
-            messagebox.showerror("Error", "El nombre de usuario ya existe.")
+        # Teléfono (10 dígitos)
+        if not phone.isdigit() or len(phone) != 10:
+            messagebox.showwarning("Atención", "El teléfono debe tener 10 dígitos numéricos.")
+            return
+
+        # Contraseña
+        if len(password) < 6:
+            messagebox.showwarning("Atención", "La contraseña debe tener al menos 6 caracteres.")
             return
 
         if password != confirm_pass:
             messagebox.showerror("Error", "Las contraseñas no coinciden.")
             return
 
-        self.controller.users_db[user] = password
+        # Solo se guardan en memoria; todavía NO se envían a la BD
+        self.controller.datos_registro = {
+            "username": user,
+            "nombre": name,
+            "apellidos": lastname,
+            "fecha_nacimiento": birth_date,
+            "correo": email,
+            "telefono": phone,
+            "password": password,
+            "es_admin": is_admin,
+        }
+
         messagebox.showinfo("Éxito", "Por favor ingrese sus datos de tarjeta")
         self.controller.show_frame("TarjetaFrame")
