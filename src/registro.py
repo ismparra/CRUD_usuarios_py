@@ -43,7 +43,7 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         self.name_entry.pack(pady=8)
         # Apellidos
         self.lastname_entry = ctk.CTkEntry(
-            self, placeholder_text="Nombre de Usuario",
+            self, placeholder_text="Apellidos",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
@@ -166,11 +166,11 @@ class RegisterFrame(ctk.CTkScrollableFrame):
             "username": user,
             "nombre": name,
             "apellidos": lastname,
-            "fecha_nacimiento": birth_date,
-            "correo": email,
-            "telefono": phone,
+            "FechaNacimiento": birth_date.strftime("%Y-%m-%d"),
+            "email": email,
+            "numero_Telefono": phone,
             "password": password,
-            "es_admin": is_admin,
+            "admin": is_admin,
         }
 
         messagebox.showinfo("Éxito", "Por favor ingrese sus datos de tarjeta")

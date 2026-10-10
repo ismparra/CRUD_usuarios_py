@@ -1,33 +1,25 @@
 import mysql.connector
 from mysql.connector import Error
+from dotenv import load_dotenv
+import os
+
+# Cargar variables de entorno
+load_dotenv()
 class Database:
     def __init__(self):
         try:
             self.connection = mysql.connector.connect(
-                host='localhost', database='control_itsur', user='root', password='root'
+                host=os.getenv("DB_HOST"), database=os.getenv("DB_NAME"), user=os.getenv("DB_USER"), password=os.getenv("DB_PASSWORD")
             )
-            self.cursor = self.connection.cursor(dictionary=True)
             print("Conexión exitosa a MySQL.")
         except Error as e:
             print(f"Error al conectar: {e}")
-    
+            raise
     def get_connection(self):
         return self.connection
 
     def close(self):
-            if hasattr(self, 'cursor') and self.cursor:
-                self.cursor.close()
             if hasattr(self, 'connection') and self.connection.is_connected():
                 self.connection.close()
                 print("Conexión cerrada.")
-# use de clase:
-db = Database()
 
-db.insert_user('S24120166','Pancho123','Francisco','Nunes Gomez','panchito123','pancho@email','123123123123123','543')
-usuario = db.get_userByPassword('Ismael10','isma123')
-print(usuario)
-usuarios = db.get_all_users()
-for u in usuarios:
-    print(u)
-
-db.close()

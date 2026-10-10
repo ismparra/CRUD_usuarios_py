@@ -1,7 +1,13 @@
 from dataclasses import dataclass
-from mysql.connector import Error
+from mysql.connector import Error, IntegrityError
 from typing import List, Optional
+import os
+from dotenv import load_dotenv
+# Cargar varibles de entorno
+load_dotenv()
 
+# Clave de cifrado
+AES_KEY = os.getenv("AES_KEY")
 @dataclass
 class Usuario:
     username: str
@@ -45,37 +51,48 @@ class DAO:
         return self.MapeoDeObjetos(fila) if fila else None
 
     def insert_user(self, user: Usuario):
+        cursor = None
         try:
             cursor = self.connection.cursor()
             query ="insert into USERS(USERNAME, FIRSTNAME, LASTNAME, PASSWORD, EMAIL, NUMEROTARJETA, TITULARTARJETA, FECHA_DE_VENCIMIENTO, CVV, ADMIN, PHONE_NUMBER, DATE_OF_BIRTH, CREATED_AT, UPDATED_AT, LAST_LOGIN, IS_ACTIVE) \
-            values(%s,%s,%s,sha2(%s,256),%s,aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),aes_encrypt(%s,'**PRIvada002233'),%s,%s,%s,NOW(),NOW(),NOW(),1)"
-            valores = (user.username, user.nombre, user.apellidos, user.password, user.email, 
-                       user.numeroTarjeta, user.titularTarjeta, user.fecha_de_vencimiento, 
-                       user.CVV, user.admin, user.numero_Telefono, user.FechaNacimiento)
+            values(%s,%s,%s,sha2(%s,256),%s,aes_encrypt(%s,%s),aes_encrypt(%s,%s),aes_encrypt(%s,%s),aes_encrypt(%s,%s),%s,%s,%s,NOW(),NOW(),NOW(),1)"
+            valores = (user.username, user.nombre, user.apellidos, user.password, user.email,
+                user.numeroTarjeta, AES_KEY,
+                user.titularTarjeta, AES_KEY,
+                user.fecha_de_vencimiento, AES_KEY,
+                user.CVV, AES_KEY,
+                user.admin, user.numero_Telefono, user.FechaNacimiento
+            )
             cursor.execute(query, valores)
             self.connection.commit()
-            print("Usuario insertado correctamente")
-        except Error as e:
-            print(f"Error al insertar usuario: {e}")
+            return True
+        except IntegrityError:
             self.connection.rollback()
+            return False
+        except Error:
+            self.connection.rollback()
+            raise
         finally:
-            if 'cursor' in locals():
+            if cursor:
                 cursor.close()
 
     def modify_user(self, user: Usuario):
         try:
             cursor = self.connection.cursor()
             query = """UPDATE USERS SET FIRSTNAME = %s, LASTNAME = %s, PASSWORD = SHA2(%s, 256),
-                EMAIL = %s, NUMEROTARJETA = AES_ENCRYPT(%s, '**PRIvada002233'),
-                TITULARTARJETA = AES_ENCRYPT(%s, '**PRIvada002233'), FECHA_DE_VENCIMIENTO = AES_ENCRYPT(%s, '**PRIvada002233'),
-                CVV = AES_ENCRYPT(%s, '**PRIvada002233'), ADMIN = %s, PHONE_NUMBER = %s, 
+                EMAIL = %s, NUMEROTARJETA = AES_ENCRYPT(%s, %s),
+                TITULARTARJETA = AES_ENCRYPT(%s, %s), FECHA_DE_VENCIMIENTO = AES_ENCRYPT(%s, %s),
+                CVV = AES_ENCRYPT(%s, %s), ADMIN = %s, PHONE_NUMBER = %s, 
                 DATE_OF_BIRTH = %s, UPDATED_AT = NOW(), IS_ACTIVE = %s 
                 WHERE USERNAME = %s"""
             # Se unificaron los nombres con el modelo
             valores = (
-                user.nombre, user.apellidos, user.password, user.email, 
-                user.numeroTarjeta, user.titularTarjeta, user.fecha_de_vencimiento, 
-                user.CVV, user.admin, user.numero_Telefono, user.FechaNacimiento, user.UsuarioActivo,
+                user.nombre, user.apellidos, user.password, user.email,
+                user.numeroTarjeta, AES_KEY,
+                user.titularTarjeta, AES_KEY,
+                user.fecha_de_vencimiento, AES_KEY,
+                user.CVV, AES_KEY,
+                user.admin, user.numero_Telefono, user.FechaNacimiento, user.UsuarioActivo,
                 user.username
             )
             cursor.execute(query, valores)

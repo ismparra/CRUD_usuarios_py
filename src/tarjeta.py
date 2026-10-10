@@ -2,7 +2,8 @@ import customtkinter as ctk
 from tkinter import messagebox
 from datetime import datetime
 # !!!PROVISIONAL!!!: esta función aún no existe, se creará en el DAO
-from dao.usuario_dao import registrar_usuario
+from dao import Usuario
+from dao import DAO 
 class TarjetaFrame(ctk.CTkFrame):
     def __init__(self, master, controller):
         super().__init__(master, corner_radius=15, fg_color="#1E1E2E")
@@ -95,16 +96,18 @@ class TarjetaFrame(ctk.CTkFrame):
         # Cargar datos de usuario de la pantalla anterior
         datos_usuario = self.controller.datos_registro
 
-        datos_tarjeta = {
-            "numero": numero,
-            "titular": titular,
-            "vencimiento": fecha_venc.date(),
-            "cvv": cvv,
+        datos = {
+            **datos_usuario,
+            "numeroTarjeta": numero,
+            "titularTarjeta": titular,
+            "fecha_de_vencimiento": fecha_venc.strftime("%Y-%m-%d"),
+            "CVV": cvv,
         }
 
-        # PROVISIONAL: llamada al DAO (firma y valor de retorno por definir)
+
+        # llamada al DAO
         try:
-            registrado = registrar_usuario(datos_usuario, datos_tarjeta)
+            registrado = self.controller.dao.insert_user(Usuario(**datos))
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo completar el registro: {e}")
             return
@@ -117,16 +120,4 @@ class TarjetaFrame(ctk.CTkFrame):
         # Limpiar datos sensibles de memoria
         self.controller.datos_registro = {}
         messagebox.showinfo("Éxito", "¡Registro completado!")
-        # Limpiar campos
-        registro = self.controller.frames["RegisterFrame"]
-        for entry in (
-            registro.user_entry, registro.name_entry, registro.lastname_entry,
-            registro.birth_entry, registro.email_entry, registro.phone_entry,
-            registro.pass_entry, registro.confirm_pass_entry,
-            self.numero_tarjeta_entry, self.titular_tarjeta_entry,
-            self.fecha_vencimiento_entry, self.cvv_entry,
-        ):
-            entry.delete(0, "end")
-        registro.admin_var.set('off')
-        # Regresar a registro
         self.controller.show_frame("LoginFrame")

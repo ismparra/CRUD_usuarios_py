@@ -2,7 +2,8 @@ import customtkinter as ctk
 from login import LoginFrame
 from registro import RegisterFrame
 from tarjeta import TarjetaFrame
-
+from dao import DAO
+from mysql_conection import Database
 # tema
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -16,12 +17,22 @@ class AuthApp(ctk.CTk):
         self.title("Sistema de Autenticación")
         self.geometry("1280x720")
         self.resizable(False, False)
+        
+        # Base de datos
+        self.db = Database()
 
-        # Base de datos local
-        self.users_db = {"admin": "1234"}
-        # self.db = Database()        # en lugar de self.users_db
-        # self.current_user = None
+        # Cargar DAO
+        self.dao = DAO(self.db.get_connection())
+
+        # Lista para los valores del registro
+        self.datos_registro = {} 
+
+        # Variable para el frame actual
         self.current_frame = None
+
+        # Cerrar conexion
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
         self.show_frame("LoginFrame")
         self.after(0, lambda: self.state("zoomed"))
     def show_frame(self, frame_name):
@@ -38,6 +49,9 @@ class AuthApp(ctk.CTk):
 
         self.current_frame.pack(pady=30, padx=30, fill="both", expand=True)
 
+    def on_close(self):
+        self.db.close()
+        self.destroy()
 
 if __name__ == "__main__":
     app = AuthApp()
