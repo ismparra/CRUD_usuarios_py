@@ -60,8 +60,19 @@ class LoginFrame(ctk.CTkFrame):
         if not user or not password:
             messagebox.showwarning("Atención", "Por favor, ingresa tu usuario y contraseña.")
             return
+        
+        usuario_logueado = self.controller.dao.get_userByPassword(user, password)
 
-        if user in self.controller.users_db and self.controller.users_db[user] == password:
-            messagebox.showinfo("Éxito", f"¡Bienvenido de nuevo, {user}!")
+        if usuario_logueado:
+            # Validar si el usuario está dado de baja
+            if not usuario_logueado.UsuarioActivo:
+                messagebox.showerror("Error", "Esta cuenta está dada de baja.")
+                return
+
+            # Guardar el objeto Usuario en el controlador principal
+            self.controller.usuario_actual = usuario_logueado
+            messagebox.showinfo("Éxito", f"¡Bienvenido, {usuario_logueado.nombre}!")
+
+            self.controller.show_frame("ListaFrame")
         else:
             messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
