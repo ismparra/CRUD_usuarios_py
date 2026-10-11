@@ -2,6 +2,7 @@ import customtkinter as ctk
 from login import LoginFrame
 from registro import RegisterFrame
 from tarjeta import TarjetaFrame
+from lista import ListaFrame
 from dao import DAO
 from mysql_conection import Database
 # tema
@@ -25,7 +26,11 @@ class AuthApp(ctk.CTk):
         self.dao = DAO(self.db.get_connection())
 
         # Lista para los valores del registro
+        self.datos_registro = {}
+        # Lista para los valores del registro
         self.datos_registro = {} 
+        # Guardar la sesión del usuario actual
+        self.usuario_actual = None
 
         # Variable para el frame actual
         self.current_frame = None
@@ -35,6 +40,7 @@ class AuthApp(ctk.CTk):
 
         self.show_frame("LoginFrame")
         self.after(0, lambda: self.state("zoomed"))
+
     def show_frame(self, frame_name):
         """Alterna dinámicamente entre los módulos importados."""
         if self.current_frame is not None:
@@ -46,7 +52,9 @@ class AuthApp(ctk.CTk):
             self.current_frame = RegisterFrame(master=self, controller=self)
         elif frame_name == "TarjetaFrame":
             self.current_frame = TarjetaFrame(master = self, controller = self)
-
+        elif frame_name == "ListaFrame":
+            self.current_frame = ListaFrame(master=self, controller=self)
+        
         self.current_frame.pack(pady=30, padx=30, fill="both", expand=True)
 
     def on_close(self):
