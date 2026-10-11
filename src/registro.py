@@ -12,16 +12,17 @@ class RegisterFrame(ctk.CTkScrollableFrame):
             scrollbar_button_hover_color="#89B4FA",
         )
         self.controller = controller
-
+        self.editando = controller.modo == "editar"
+        self.original = controller.usuario_editando
         # titulo
         ctk.CTkLabel(
-            self, text="Crear Cuenta",
+            self, text=f"Modificar a {self.original.username}" if self.editando else "Crear Cuenta",
             font=ctk.CTkFont(size=26, weight="bold"),
             text_color="#FFFFFF"
         ).pack(pady=(25, 5))
 
         ctk.CTkLabel(
-            self, text="Completa tus datos para registrarte",
+            self, text="Completa tus datos",
             font=ctk.CTkFont(size=13),
             text_color="#A6ADC8"
         ).pack(pady=(0, 20))
@@ -72,7 +73,7 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         self.phone_entry.pack(pady=8)
         # Contrasenia
         self.pass_entry = ctk.CTkEntry(
-            self, placeholder_text="Contraseña", show="•",
+            self, placeholder_text="Nueva contraseña (vacío = no cambiar)" if self.editando else "Contraseña", show="•",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
@@ -96,7 +97,9 @@ class RegisterFrame(ctk.CTkScrollableFrame):
             onvalue = 'on',
             offvalue = 'off'
         )
-        self.admin_entry.pack(pady=8)
+        # es admin (solo visible para administradores)
+        if self.controller.usuario_actual and self.controller.usuario_actual.admin:
+            self.admin_entry.pack(pady=8)
 
         # boton continuar
         ctk.CTkButton(
@@ -107,13 +110,40 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         ).pack(pady=(20, 10))
 
         # enlace a login
+        destino = "ListaFrame" if (self.editando or self.controller.usuario_actual) else "LoginFrame"
         toggle_label = ctk.CTkLabel(
-            self, text="¿Ya tienes cuenta? Inicia sesión",
+            self, text="Cancelar" if destino == "ListaFrame" else "¿Ya tienes cuenta? Inicia sesion",
             font=ctk.CTkFont(size=12, underline=True),
             text_color="#89B4FA", cursor="hand2"
         )
         toggle_label.pack(pady=(10, 0))
-        toggle_label.bind("<Button-1>", lambda e: self.controller.show_frame("LoginFrame"))
+        toggle_label.bind("<Button-1>", lambda e: self._cancelar(destino))
+        self._prellenar()
+
+    def _prellenar(self):
+        campos = ["username", "nombre", "apellidos", "FechaNacimiento",
+                "email", "numero_Telefono", "admin"]
+        if self.controller.datos_registro:
+            fuente = self.controller.datos_registro
+        elif self.editando:
+            fuente = {k: getattr(self.original, k) for k in campos}
+        else:
+            return
+
+        fecha = datetime.strptime(str(fuente["FechaNacimiento"]), "%Y-%m-%d").strftime("%d/%m/%Y")
+
+        self.user_entry.insert(0, fuente["username"])
+        self.name_entry.insert(0, fuente["nombre"])
+        self.lastname_entry.insert(0, fuente["apellidos"])
+        self.birth_entry.insert(0, fecha)
+        self.email_entry.insert(0, fuente["email"])
+        self.phone_entry.insert(0, fuente["numero_Telefono"])
+        self.admin_var.set("on" if fuente["admin"] else "off")
+
+    def _cancelar(self, destino):
+        if self.editando:
+            self.controller.terminar_flujo()
+        self.controller.show_frame(destino)
 
     def submit_register(self):
         user = self.user_entry.get().strip()
@@ -127,7 +157,10 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         is_admin = self.admin_var.get() == 'on'
 
         # Campos obligatorios
-        if not all([user, name, lastname, birth, email, phone, password, confirm_pass]):
+        campos = [user, name, lastname, birth, email, phone]
+        if not self.editando:
+            campos += [password, confirm_pass]
+        if not all(campos):
             messagebox.showwarning("Atención", "Todos los campos son obligatorios.")
             return
 
@@ -152,14 +185,15 @@ class RegisterFrame(ctk.CTkScrollableFrame):
             messagebox.showwarning("Atención", "El teléfono debe tener 10 dígitos numéricos.")
             return
 
-        # Contraseña
-        if len(password) < 6:
-            messagebox.showwarning("Atención", "La contraseña debe tener al menos 6 caracteres.")
-            return
+        # Contraseña (al editar solo se valida si escribieron una nueva)
+        if password or not self.editando:
+            if len(password) < 6:
+                messagebox.showwarning("Atención", "La contraseña debe tener al menos 6 caracteres.")
+                return
 
-        if password != confirm_pass:
-            messagebox.showerror("Error", "Las contraseñas no coinciden.")
-            return
+            if password != confirm_pass:
+                messagebox.showerror("Error", "Las contraseñas no coinciden.")
+                return
 
         # Solo se guardan en memoria; todavía NO se envían a la BD
         self.controller.datos_registro = {
@@ -169,9 +203,10 @@ class RegisterFrame(ctk.CTkScrollableFrame):
             "FechaNacimiento": birth_date.strftime("%Y-%m-%d"),
             "email": email,
             "numero_Telefono": phone,
-            "password": password,
+            "password": password or None,   # None = el usuario no quiere cambiar la contrasena
             "admin": is_admin,
         }
 
-        messagebox.showinfo("Éxito", "Por favor ingrese sus datos de tarjeta")
+        if not self.editando:
+            messagebox.showinfo("Éxito", "Por favor ingrese sus datos de tarjeta")
         self.controller.show_frame("TarjetaFrame")

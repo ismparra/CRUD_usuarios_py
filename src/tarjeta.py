@@ -1,7 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from datetime import datetime
-# !!!PROVISIONAL!!!: esta función aún no existe, se creará en el DAO
 from dao import Usuario
 from dao import DAO 
 class TarjetaFrame(ctk.CTkFrame):
@@ -9,15 +8,19 @@ class TarjetaFrame(ctk.CTkFrame):
         super().__init__(master, corner_radius=15, fg_color="#1E1E2E")
         self.controller = controller
 
+        # Modo y usuario original
+        self.editando = controller.modo == "editar"
+        self.original = controller.usuario_editando
+        
         # titulo
         ctk.CTkLabel(
-            self, text="Agrega los datos de tu tarjeta",
+            self, text="Modifica los datos de la tarjeta" if self.editando else "Agrega los datos de tu tarjeta",
             font=ctk.CTkFont(size=26, weight="bold"),
             text_color="#FFFFFF"
         ).pack(pady=(25, 5))
 
         ctk.CTkLabel(
-            self, text="¡Ya casi finalizas tu registro!",
+            self, text=f"Usuario: {self.original.username}" if self.editando else "¡Ya casi finalizas tu registro!",
             font=ctk.CTkFont(size=13),
             text_color="#A6ADC8"
         ).pack(pady=(0, 20))
@@ -56,12 +59,37 @@ class TarjetaFrame(ctk.CTkFrame):
         self.cvv_entry.pack(pady=8)
 
         # boton Finalizar
-        ctk.CTkButton(
-            self, text="Finalizar Registro", command=self.submit_register,
+        self.boton_finalizar = ctk.CTkButton(
+            self,
+            text="Guardar Cambios" if self.editando else "Finalizar Registro",
+            command=self.submit_register,
             width=280, height=45, corner_radius=10,
             font=ctk.CTkFont(size=15, weight="bold"),
             fg_color="#A6E3A1", hover_color="#94E2D5", text_color="#11111B"
-        ).pack(pady=(20, 10))
+        )
+        self.boton_finalizar.pack(pady=(20, 10))
+
+        # boton para volver
+        volver = ctk.CTkLabel(
+            self, text="Volver",
+            font=ctk.CTkFont(size=12, underline=True),
+            text_color="#89B4FA", cursor="hand2"
+        )
+        volver.pack(pady=(5, 0))
+        volver.bind("<Button-1>", lambda e: self.controller.show_frame("RegisterFrame"))
+
+        # prellenar al editar
+        if self.editando:
+            self._prellenar()
+    # Prellenado
+    def _prellenar(self):
+        u = self.original
+        self.numero_tarjeta_entry.insert(0, str(u.numeroTarjeta or ""))
+        self.titular_tarjeta_entry.insert(0, u.titularTarjeta or "")
+        if u.fecha_de_vencimiento:
+            venc = datetime.strptime(str(u.fecha_de_vencimiento), "%Y-%m-%d").strftime("%m/%y")
+            self.fecha_vencimiento_entry.insert(0, venc)
+        self.cvv_entry.insert(0, str(u.CVV or ""))
 
     def submit_register(self):
         numero = self.numero_tarjeta_entry.get().replace(" ", "").strip()
@@ -106,18 +134,32 @@ class TarjetaFrame(ctk.CTkFrame):
 
 
         # llamada al DAO
+        # insertar o actualizar según el modo
         try:
-            registrado = self.controller.dao.insert_user(Usuario(**datos))
+            if self.editando:
+                ok = self.controller.dao.update_user(self.original.username, Usuario(**datos))
+            else:
+                ok = self.controller.dao.insert_user(Usuario(**datos))
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo completar el registro: {e}")
+            messagebox.showerror("Error", f"No se pudo completar la operación: {e}")
             return
 
-        if not registrado:
+        if not ok:
             messagebox.showerror("Error", "El nombre de usuario o correo ya existe.")
             self.controller.show_frame("RegisterFrame")
             return
 
-        # Limpiar datos sensibles de memoria
-        self.controller.datos_registro = {}
-        messagebox.showinfo("Éxito", "¡Registro completado!")
-        self.controller.show_frame("LoginFrame")
+        # refrezcar la sesion del administrador para que no se quede con datos viejos cuando se edita a si mismo
+        if self.editando and self.original.username == self.controller.usuario_actual.username:
+            self.controller.usuario_actual = self.controller.dao.get_user(datos["username"])
+
+        # Limpiar datos sensibles de memoria y reiniciar el modo
+        self.controller.terminar_flujo()
+
+        if self.editando:
+            messagebox.showinfo("Éxito", "Usuario actualizado.")
+            self.controller.show_frame("ListaFrame")
+        else:
+            messagebox.showinfo("Éxito", "¡Registro completado!")
+            destino = "ListaFrame" if self.controller.usuario_actual else "LoginFrame"
+            self.controller.show_frame(destino)

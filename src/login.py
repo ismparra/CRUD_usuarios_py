@@ -51,8 +51,7 @@ class LoginFrame(ctk.CTkFrame):
             text_color="#89B4FA", cursor="hand2"
         )
         toggle_label.pack(pady=(20, 0))
-        toggle_label.bind("<Button-1>", lambda e: self.controller.show_frame("RegisterFrame"))
-
+        toggle_label.bind("<Button-1>", lambda e: self.controller.iniciar_registro())
     def submit_login(self):
         user = self.user_entry.get().strip()
         password = self.pass_entry.get().strip()

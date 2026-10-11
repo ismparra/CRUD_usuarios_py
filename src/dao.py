@@ -105,6 +105,56 @@ class DAO:
             if 'cursor' in locals():
                 cursor.close()
 
+    def update_user(self, username_original: str, user: Usuario) -> bool:
+        cursor = None
+        try:
+            cursor = self.connection.cursor()
+
+            # duplicados (otros usuarios que ya usen esos datos), excluyendo al propio usuario
+            cursor.execute(
+                "SELECT 1 FROM USERS WHERE (USERNAME = %s OR EMAIL = %s) AND USERNAME <> %s LIMIT 1",
+                (user.username, user.email, username_original),
+            )
+            if cursor.fetchone():
+                return False
+
+            sets = [
+                "USERNAME = %s", "FIRSTNAME = %s", "LASTNAME = %s", "EMAIL = %s",
+                "NUMEROTARJETA = AES_ENCRYPT(%s, %s)",
+                "TITULARTARJETA = AES_ENCRYPT(%s, %s)",
+                "FECHA_DE_VENCIMIENTO = AES_ENCRYPT(%s, %s)",
+                "CVV = AES_ENCRYPT(%s, %s)",
+                "ADMIN = %s", "PHONE_NUMBER = %s", "DATE_OF_BIRTH = %s",
+                "UPDATED_AT = NOW()",
+            ]
+            valores = [
+                user.username, user.nombre, user.apellidos, user.email,
+                user.numeroTarjeta, AES_KEY,
+                user.titularTarjeta, AES_KEY,
+                user.fecha_de_vencimiento, AES_KEY,
+                user.CVV, AES_KEY,
+                user.admin, user.numero_Telefono, user.FechaNacimiento,
+            ]
+
+            # La contrasena solo se cambia si escribieron una nueva, si esta vacia significa que seguira con la misma
+            if user.password:
+                sets.append("PASSWORD = SHA2(%s, 256)")
+                valores.append(user.password)
+
+            valores.append(username_original)
+            cursor.execute(f"UPDATE USERS SET {', '.join(sets)} WHERE USERNAME = %s", valores)
+            self.connection.commit()
+            return True
+        except IntegrityError:
+            self.connection.rollback()
+            return False
+        except Error:
+            self.connection.rollback()
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+
     def Unsuscribe(self, usuario: str):
         try:
             cursor = self.connection.cursor()
@@ -131,6 +181,33 @@ class DAO:
             if 'cursor' in locals():
                 cursor.close()
 
+    @staticmethod
+    def _a_texto(valor):
+        if valor is None:
+            return ''
+        if isinstance(valor, (bytes, bytearray)):
+            return bytes(valor).decode('utf-8', errors='ignore')
+        return str(valor)
+
+    def get_user_con_tarjeta(self, usuario: str):
+        # igual que el get_user pero con los datos de la tarjeta descifrados
+        cursor = self.connection.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                "SELECT USERNAME, FIRSTNAME, LASTNAME, PASSWORD, EMAIL,\
+                CAST(AES_DECRYPT(NUMEROTARJETA, %s) AS CHAR) AS NUMEROTARJETA,\
+                CAST(AES_DECRYPT(TITULARTARJETA, %s) AS CHAR) AS TITULARTARJETA,\
+                CAST(AES_DECRYPT(FECHA_DE_VENCIMIENTO, %s) AS CHAR) AS FECHA_DE_VENCIMIENTO,\
+                CAST(AES_DECRYPT(CVV, %s) AS CHAR) AS CVV,\
+                ADMIN, PHONE_NUMBER, DATE_OF_BIRTH, IS_ACTIVE\
+                FROM USERS WHERE USERNAME = %s",
+                (AES_KEY, AES_KEY, AES_KEY, AES_KEY, usuario),
+            )
+            fila = cursor.fetchone()
+        finally:
+            cursor.close()
+        return self.MapeoDeObjetos(fila) if fila else None
+
     def MapeoDeObjetos(self, fila: dict) -> Usuario:
         return Usuario(
             username=fila['USERNAME'],
@@ -138,10 +215,10 @@ class DAO:
             apellidos=fila['LASTNAME'],
             password=fila['PASSWORD'],
             email=fila['EMAIL'],
-            numeroTarjeta=fila.get('NUMEROTARJETA', ''),  
-            titularTarjeta=fila.get('TITULARTARJETA', ''),
-            fecha_de_vencimiento=fila.get('FECHA_DE_VENCIMIENTO', ''),
-            CVV=fila.get('CVV', ''),
+            numeroTarjeta=self._a_texto(fila.get('NUMEROTARJETA')),
+            titularTarjeta=self._a_texto(fila.get('TITULARTARJETA')),
+            fecha_de_vencimiento=self._a_texto(fila.get('FECHA_DE_VENCIMIENTO')),
+            CVV=self._a_texto(fila.get('CVV')),
             admin=bool(fila['ADMIN']),
             numero_Telefono=fila['PHONE_NUMBER'],
             FechaNacimiento=fila['DATE_OF_BIRTH'],

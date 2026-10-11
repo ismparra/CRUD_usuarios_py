@@ -27,8 +27,9 @@ class AuthApp(ctk.CTk):
 
         # Lista para los valores del registro
         self.datos_registro = {}
-        # Lista para los valores del registro
-        self.datos_registro = {} 
+        # definir modo del frame registro
+        self.modo = "crear"            # "crear" o "editar"
+        self.usuario_editando = None
         # Guardar la sesión del usuario actual
         self.usuario_actual = None
 
@@ -40,6 +41,25 @@ class AuthApp(ctk.CTk):
 
         self.show_frame("LoginFrame")
         self.after(0, lambda: self.state("zoomed"))
+        
+
+    def iniciar_registro(self):
+        self.modo = "crear"
+        self.usuario_editando = None
+        self.datos_registro = {}
+        self.show_frame("RegisterFrame")
+
+    def iniciar_edicion(self, user):
+        completo = self.dao.get_user_con_tarjeta(user.username)
+        self.modo = "editar"
+        self.usuario_editando = completo or user
+        self.datos_registro = {}
+        self.show_frame("RegisterFrame")
+
+    def terminar_flujo(self):
+        self.modo = "crear"
+        self.usuario_editando = None
+        self.datos_registro = {}
 
     def show_frame(self, frame_name):
         """Alterna dinámicamente entre los módulos importados."""

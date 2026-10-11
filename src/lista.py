@@ -34,7 +34,7 @@ class ListaFrame(ctk.CTkScrollableFrame):
         if self.es_admin:
             ctk.CTkButton(
                 top_buttons_frame, text="Crear Nuevo Usuario",
-                command=lambda: self.controller.show_frame("RegisterFrame"),
+                command=self.controller.iniciar_registro,
                 width=160, height=35, corner_radius=10,
                 font=ctk.CTkFont(weight="bold"),
                 fg_color="#A6E3A1", hover_color="#94E2D5", text_color="#11111B"
@@ -125,9 +125,9 @@ class ListaFrame(ctk.CTkScrollableFrame):
             f"Estado: {'Activo' if user.UsuarioActivo else 'Dado de baja'}"
         )
         messagebox.showinfo(f"Detalles de {user.username}", detalles)
-
+    # Ya jala
     def modificar_usuario(self, user):
-        messagebox.showinfo("Modificar", f"Pendiente {user.username}.")
+        self.controller.iniciar_edicion(user)
 
     def dar_de_baja(self, user):
         if messagebox.askyesno("Confirmación", f"¿Dar de baja a '{user.username}'? No podrá iniciar sesión."):
