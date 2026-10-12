@@ -3,6 +3,7 @@ from login import LoginFrame
 from registro import RegisterFrame
 from tarjeta import TarjetaFrame
 from lista import ListaFrame
+from ver import VistFrame
 from dao import DAO
 from mysql_conection import Database
 # tema
@@ -74,7 +75,8 @@ class AuthApp(ctk.CTk):
             self.current_frame = TarjetaFrame(master = self, controller = self)
         elif frame_name == "ListaFrame":
             self.current_frame = ListaFrame(master=self, controller=self)
-        
+        elif frame_name == "VistFrame":
+            self.current_frame = VistFrame(master=self, controller=self)
         self.current_frame.pack(pady=30, padx=30, fill="both", expand=True)
 
     def on_close(self):
