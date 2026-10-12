@@ -51,14 +51,14 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         self.lastname_entry.pack(pady=8)
         # Fecha de nacimiento
         self.birth_entry = ctk.CTkEntry(
-            self, placeholder_text="Fecha de nacimiento",
+            self, placeholder_text="Fecha de nacimiento (DD/MM/AAAA)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
         self.birth_entry.pack(pady=8)
         # Correo
         self.email_entry = ctk.CTkEntry(
-            self, placeholder_text="Correo Electrónico",
+            self, placeholder_text="Correo Electrónico (example@email.com)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
@@ -66,7 +66,7 @@ class RegisterFrame(ctk.CTkScrollableFrame):
         
         # Telefono
         self.phone_entry = ctk.CTkEntry(
-            self, placeholder_text="Telefono",
+            self, placeholder_text="Telefono (10 dígitos)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
