@@ -27,7 +27,7 @@ class TarjetaFrame(ctk.CTkFrame):
 
         # numeroTarjeta
         self.numero_tarjeta_entry = ctk.CTkEntry(
-            self, placeholder_text="Numero Tarjeta",
+            self, placeholder_text="Numero Tarjeta (16 dígitos)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
@@ -44,7 +44,7 @@ class TarjetaFrame(ctk.CTkFrame):
         
         # fecha vencimiento
         self.fecha_vencimiento_entry = ctk.CTkEntry(
-            self, placeholder_text="Fecha de vencimiento",
+            self, placeholder_text="Fecha de vencimiento (MM/AA)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
@@ -52,7 +52,7 @@ class TarjetaFrame(ctk.CTkFrame):
 
         # cvv
         self.cvv_entry = ctk.CTkEntry(
-            self, placeholder_text="CVV",
+            self, placeholder_text="CVV (3 dígitos)",
             width=280, height=42, corner_radius=10,
             fg_color="#313244", border_color="#45475A", text_color="#FFFFFF"
         )
