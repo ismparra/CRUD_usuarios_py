@@ -24,6 +24,9 @@ class Usuario:
     FechaNacimiento: str
     UsuarioActivo: bool = True
     id: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    last_login: Optional[str] = None
 
 class DAO:
     def __init__(self, connection): 
@@ -190,7 +193,6 @@ class DAO:
         return str(valor)
 
     def get_user_con_tarjeta(self, usuario: str):
-        # igual que el get_user pero con los datos de la tarjeta descifrados
         cursor = self.connection.cursor(dictionary=True)
         try:
             cursor.execute(
@@ -199,7 +201,8 @@ class DAO:
                 CAST(AES_DECRYPT(TITULARTARJETA, %s) AS CHAR) AS TITULARTARJETA,\
                 CAST(AES_DECRYPT(FECHA_DE_VENCIMIENTO, %s) AS CHAR) AS FECHA_DE_VENCIMIENTO,\
                 CAST(AES_DECRYPT(CVV, %s) AS CHAR) AS CVV,\
-                ADMIN, PHONE_NUMBER, DATE_OF_BIRTH, IS_ACTIVE\
+                ADMIN, PHONE_NUMBER, DATE_OF_BIRTH, IS_ACTIVE,\
+                CREATED_AT, UPDATED_AT, LAST_LOGIN \
                 FROM USERS WHERE USERNAME = %s",
                 (AES_KEY, AES_KEY, AES_KEY, AES_KEY, usuario),
             )
@@ -222,5 +225,8 @@ class DAO:
             admin=bool(fila['ADMIN']),
             numero_Telefono=fila['PHONE_NUMBER'],
             FechaNacimiento=fila['DATE_OF_BIRTH'],
-            UsuarioActivo=bool(fila['IS_ACTIVE'])
+            UsuarioActivo=bool(fila['IS_ACTIVE']),
+            created_at=self._a_texto(fila.get('CREATED_AT')),
+            updated_at=self._a_texto(fila.get('UPDATED_AT')),
+            last_login=self._a_texto(fila.get('LAST_LOGIN'))
         )
