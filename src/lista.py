@@ -59,6 +59,8 @@ class ListaFrame(ctk.CTkScrollableFrame):
                 return
 
             for user in usuarios:
+                if not self.es_admin and user.admin:
+                    continue
                 card = ctk.CTkFrame(self.lista_contenedor, fg_color="#313244", corner_radius=10)
                 card.pack(pady=5, padx=20, fill="x")
 
