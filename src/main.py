@@ -3,7 +3,7 @@ from login import LoginFrame
 from registro import RegisterFrame
 from tarjeta import TarjetaFrame
 from lista import ListaFrame
-from ver import VistFrame
+from Ver import VistFrame
 from dao import DAO
 from mysql_conection import Database
 # tema
