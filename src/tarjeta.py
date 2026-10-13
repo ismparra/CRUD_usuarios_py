@@ -87,7 +87,7 @@ class TarjetaFrame(ctk.CTkFrame):
         self.numero_tarjeta_entry.insert(0, str(u.numeroTarjeta or ""))
         self.titular_tarjeta_entry.insert(0, u.titularTarjeta or "")
         if u.fecha_de_vencimiento:
-            venc = datetime.strptime(str(u.fecha_de_vencimiento), "%Y-%m-%d").strftime("%m/%y")
+            venc = datetime.strptime(str(u.fecha_de_vencimiento), "%m/%y").strftime("%m/%y")
             self.fecha_vencimiento_entry.insert(0, venc)
         self.cvv_entry.insert(0, str(u.CVV or ""))
 
