@@ -1,7 +1,5 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from datetime import datetime
-from dao import Usuario
 
 class ListaFrame(ctk.CTkScrollableFrame):
     def __init__(self, master, controller):
@@ -117,14 +115,9 @@ class ListaFrame(ctk.CTkScrollableFrame):
             ctk.CTkLabel(self.lista_contenedor, text=f"Error de conexión: {e}", text_color="#F38BA8").pack(pady=10)
     # Metodos para los botones
     def ver_usuario(self, user):
-        detalles = (
-            f"Usuario: {user.username}\n"
-            f"Nombre: {user.nombre} {user.apellidos}\n"
-            f"Correo: {user.email}\n"
-            f"Teléfono: {user.numero_Telefono}\n"
-            f"Estado: {'Activo' if user.UsuarioActivo else 'Dado de baja'}"
-        )
-        messagebox.showinfo(f"Detalles de {user.username}", detalles)
+        self.controller.usuario_viendo = user
+        self.controller.show_frame("VistFrame")
+        
     # Ya jala
     def modificar_usuario(self, user):
         self.controller.iniciar_edicion(user)
