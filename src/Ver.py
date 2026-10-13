@@ -54,7 +54,7 @@ class VistFrame(ctk.CTkScrollableFrame):
         mostrar_dato("Rol", "Administrador" if usuario_Completo.admin else "Usuario Regular")
 
         # Datos más sensibles, solo para admins o el propio usuario
-        if self.es_admin or es_Propio:
+        if self.es_admin:
             
             # Subtítulo 
             ctk.CTkLabel(
