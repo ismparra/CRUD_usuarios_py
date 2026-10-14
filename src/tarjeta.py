@@ -1,8 +1,8 @@
-from datetime import datetime, date
+from datetime import datetime
 from tkinter import messagebox
 import customtkinter as ctk
 
-from dao import DAO, Usuario
+from dao import Usuario
 
 
 class TarjetaFrame(ctk.CTkFrame):
@@ -127,17 +127,16 @@ class TarjetaFrame(ctk.CTkFrame):
         self.numero_tarjeta_entry.insert(0, str(u.numeroTarjeta or ""))
         self.titular_tarjeta_entry.insert(0, u.titularTarjeta or "")
 
-        # Convertir de formato YYYY-MM-DD (Base de datos) a MM/AA (Interfaz)
-        if u.fecha_de_vencimiento:
-            venc = u.fecha_de_vencimiento
-            if isinstance(venc, str):
-                try:
-                    venc = datetime.strptime(venc, "%Y-%m-%d")
-                except ValueError:
-                    venc = None
-
-            if isinstance(venc, (datetime, date)):
-                self.fecha_vencimiento_entry.insert(0, venc.strftime("%m/%y"))
+        # La BD puede tener AAAA-MM-DD (lo normal) o MM/AA (registros viejos)
+        valor = str(u.fecha_de_vencimiento or "").strip()
+        for formato in ("%Y-%m-%d", "%m/%y"):
+            try:
+                self.fecha_vencimiento_entry.insert(
+                    0, datetime.strptime(valor, formato).strftime("%m/%y")
+                )
+                break
+            except ValueError:
+                continue
 
         self.cvv_entry.insert(0, str(u.CVV or ""))
 
@@ -147,14 +146,12 @@ class TarjetaFrame(ctk.CTkFrame):
         vencimiento = self.fecha_vencimiento_entry.get().strip()
         cvv = self.cvv_entry.get().strip()
 
-        # 1. Validar que no haya campos vacíos
+        # 1. Campos vacíos
         if not all([numero, titular, vencimiento, cvv]):
-            messagebox.showwarning(
-                "Atención", "Todos los campos son obligatorios."
-            )
+            messagebox.showwarning("Atención", "Todos los campos son obligatorios.")
             return
 
-        # 2. Validar que la tarjeta tenga exactamente 16 dígitos
+        # 2. Tarjeta de 16 dígitos
         if not numero.isdigit() or len(numero) != 16:
             messagebox.showwarning(
                 "Atención",
@@ -162,7 +159,7 @@ class TarjetaFrame(ctk.CTkFrame):
             )
             return
 
-        # 3. Validar el formato de la fecha de vencimiento (MM/AA)
+        # 3. Formato de fecha (MM/AA)
         try:
             fecha_venc = datetime.strptime(vencimiento, "%m/%y")
         except ValueError:
@@ -172,46 +169,30 @@ class TarjetaFrame(ctk.CTkFrame):
             )
             return
 
-        # Validar que la tarjeta no esté vencida respecto al mes actual
+        # Tarjeta no vencida respecto al mes actual
         hoy = datetime.now()
         if (fecha_venc.year, fecha_venc.month) < (hoy.year, hoy.month):
             messagebox.showwarning("Atención", "La tarjeta ingresada está vencida.")
             return
 
-        # 4. Validar que el CVV sea exactamente de 3 dígitos
+        # 4. CVV de 3 dígitos
         if not cvv.isdigit() or len(cvv) != 3:
             messagebox.showwarning(
                 "Atención", "El CVV debe contener exactamente 3 dígitos numéricos."
             )
             return
 
-        # Cargar datos de usuario de la pantalla anterior o del objeto editado
-        # Cargar datos de usuario de la pantalla anterior o del objeto editado
-        if self.editando:
-            datos_usuario = {
-                "username": self.original.username,
-                "nombre": self.original.nombre,
-                "apellidos": self.original.apellidos,
-                "password": self.original.password,
-                "email": self.original.email,
-                "admin": self.original.admin,
-                "numero_Telefono": getattr(self.original, 'numero_Telefono', None),
-                "FechaNacimiento": getattr(self.original, 'FechaNacimiento', None),
-            }
-        else:
-            datos_usuario = self.controller.datos_registro
-
+        # Datos de la pantalla anterior (tanto al crear como al editar).
+        # En modo editar, "password" es None si no se quiere cambiar.
         datos = {
-            **datos_usuario,
+            **self.controller.datos_registro,
             "numeroTarjeta": numero,
             "titularTarjeta": titular,
-            "fecha_de_vencimiento": fecha_venc.strftime(
-                "%Y-%m-%d"
-            ),  # Formato guardado en BD
+            "fecha_de_vencimiento": fecha_venc.strftime("%Y-%m-%d"),
             "CVV": cvv,
         }
 
-        # Llamada al DAO (Insertar o Actualizar)
+        # Insertar o actualizar según el modo
         try:
             if self.editando:
                 ok = self.controller.dao.update_user(
@@ -220,25 +201,23 @@ class TarjetaFrame(ctk.CTkFrame):
             else:
                 ok = self.controller.dao.insert_user(Usuario(**datos))
         except Exception as e:
-            messagebox.showerror(
-                "Error", f"No se pudo completar la operación: {e}"
-            )
+            messagebox.showerror("Error", f"No se pudo completar la operación: {e}")
             return
 
         if not ok:
-            messagebox.showerror(
-                "Error", "El nombre de usuario o correo ya existe."
-            )
+            messagebox.showerror("Error", "El nombre de usuario o correo ya existe.")
             self.controller.show_frame("RegisterFrame")
             return
 
-        # Refrescar la sesión si el administrador se edita a sí mismo
+        # Refrescar la sesión si el administrador se editó a sí mismo
+        # (se usa el username NUEVO, el viejo ya no existe en la BD)
         if (
             self.editando
+            and self.controller.usuario_actual
             and self.original.username == self.controller.usuario_actual.username
         ):
             self.controller.usuario_actual = self.controller.dao.get_user(
-                self.original.username
+                datos["username"]
             )
 
         # Limpiar datos en memoria y finalizar
@@ -249,7 +228,5 @@ class TarjetaFrame(ctk.CTkFrame):
             self.controller.show_frame("ListaFrame")
         else:
             messagebox.showinfo("Éxito", "¡Registro completado!")
-            destino = (
-                "ListaFrame" if self.controller.usuario_actual else "LoginFrame"
-            )
+            destino = "ListaFrame" if self.controller.usuario_actual else "LoginFrame"
             self.controller.show_frame(destino)
